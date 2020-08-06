@@ -1,8 +1,12 @@
+altgraph==0.17
 ecdsa==0.15
 esptool==2.8
+macholib==1.14
 pyaes==1.6.1
+PyInstaller==3.6
 pyserial==3.4
 PySide2==5.15.0
+PySimpleGUI==4.28.0
 PySimpleGUIQt==0.35.0
 shiboken2==5.15.0
 six==1.15.0
