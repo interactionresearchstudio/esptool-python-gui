@@ -18,7 +18,6 @@ jobs:
       - name: Install requirements
         run: |
           pip install -r requirements.txt
-          pip install -e .
       - name: Run PyInstaller
         run: |
           python -m PyInstaller.__main__ -F -w -n IRS-Firmware-Uploader esptool-python-gui.py
@@ -40,7 +39,6 @@ jobs:
       - name: Install requirements
         run: |
           pip install -r requirements.txt
-          pip install -e .
       - name: Run PyInstaller
         run: |
           python -m PyInstaller.__main__ -F -w -n IRS-Firmware-Uploader esptool-python-gui.py
@@ -63,7 +61,6 @@ jobs:
       - name: Install requirements
         run: |
           pip install -r requirements.txt
-          pip install -e .
       - name: Run PyInstaller
         run: |
           python -m PyInstaller.__main__ -F -w -n IRS-Firmware-Uploader esptool-python-gui.py
