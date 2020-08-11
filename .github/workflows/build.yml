@@ -68,7 +68,7 @@ jobs:
         run: ls dist
       - name: Move app
         run: |
-          mv dist/ESPHome-Flasher.app dist/ESPHome-Flasher-dev-macOS.app
+          mv dist/IRS-Firmware-Uploader.app dist/IRS-Firmware-Uploader-macOS.app
       - uses: actions/upload-artifact@v2
         with:
           name: macOS
