@@ -7,6 +7,7 @@ import serial
 import sys
 import glob
 from tkinter import *
+from tkinter import ttk
 
 github_api_url = 'https://api.github.com/repos/interactionresearchstudio/ESP32-SOCKETIO/releases'
 
@@ -131,6 +132,11 @@ window = Tk()
 window.geometry('300x300')
 window.title("IRS Firmware Uploader")
 
+style = ttk.Style()
+style.map("C.TButton",
+    foreground=[('pressed', 'blue'), ('active', 'blue')],
+    background=[('pressed', '!disabled', 'grey'), ('active', 'white')])
+
 instructions = Label(window, wraplength=200, justify="left", text="Please select the device from the dropdown menu. When you're ready to upload the firmware, click Upload Firmware!")
 instructions.place(relx=0.5, y=50, anchor=CENTER)
 
@@ -143,16 +149,17 @@ option_list = serial_ports()
 option = StringVar(window)
 option.set(option_list[0])
 opt = OptionMenu(window, option, *option_list)
-opt.config(width=30, font=('Helvetica', 12))
+opt.config(width=30, font=('Helvetica', 12), bg="black")
 opt.pack()
 opt.place(relx=0.5, rely=0.4, anchor=CENTER)
 
-refresh_list_button = Button(window, text="Refresh device list",
-    command=update_serial_list)
+refresh_list_button = ttk.Button(window,
+    text="Refresh device list",
+    command=update_serial_list, style="C.TButton")
 refresh_list_button.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-upload_button = Button(window, text="Upload Firmware",
-    command=lambda: upload_from_github(option.get()))
+upload_button = ttk.Button(window, text="Upload Firmware",
+    command=lambda: upload_from_github(option.get()), style="C.TButton")
 upload_button.place(relx=0.5, rely=0.9, anchor=CENTER)
 
 window.mainloop()
