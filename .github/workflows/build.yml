@@ -47,7 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Windows-x86
-          path: dist/IRS-FirmwareUploader.exe
+          path: dist/IRS-Firmware-Uploader.exe
 
   build-macos:
     runs-on: macOS-latest
