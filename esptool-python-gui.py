@@ -12,7 +12,7 @@ from tkinter import ttk
 github_api_url = 'https://api.github.com/repos/interactionresearchstudio/ESP32-SOCKETIO/releases'
 
 esptool_options = ['--chip', 'esp32',
-'--port', '/dev/cu.usbserial-01E5C374',
+'--port', '/dev/cu.myserial',
 '--baud', '921600',
 '--before', 'default_reset',
 '--after', 'hard_reset',
@@ -20,6 +20,14 @@ esptool_options = ['--chip', 'esp32',
 '--flash_freq', '80m',
 '--flash_size', 'detect',
 '0x10000', 'app.ino.bin'
+]
+
+esptool_erase_options = ['--chip', 'esp32',
+'--port', '/dev/cu.myserial',
+'--baud', '921600',
+'--before', 'default_reset',
+'--after', 'no_reset',
+'erase_flash'
 ]
 
 print("Imported esptool.")
@@ -33,6 +41,27 @@ def get_bin_url(api_url):
     except Exception as e:
         print(e)
         return None
+
+def erase_flash(serial_port):
+    upload_button.config(state=DISABLED)
+    status_var.set("Downloading firmware...")
+    result_label.config(fg="blue")
+
+    # Write to device with esptool
+    esptool_erase_options[3] = serial_port
+    try:
+        status_var.set("Erasing device...")
+        window.update()
+        esptool_main(esptool_erase_options)
+        status_var.set("Device erased.")
+        result_label.config(fg="green")
+        upload_button.config(state=NORMAL)
+    except Exception as e:
+        status_var.set("Error erasing device!")
+        result_label.config(fg="red")
+        upload_button.config(state=NORMAL)
+        os.unlink(fp.name)
+        print(e)
 
 def serial_ports():
     """ Lists serial port names
@@ -101,6 +130,7 @@ def upload_from_github(serial_port):
 
     # Write to device with esptool
     esptool_options[3] = serial_port
+    esptool_erase_options[3] = serial_port
     esptool_options[-1] = fp.name
     try:
         status_var.set("Writing firmware...")
@@ -157,6 +187,10 @@ refresh_list_button = ttk.Button(window,
     text="Refresh device list",
     command=update_serial_list, style="C.TButton")
 refresh_list_button.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+upload_button = ttk.Button(window, text="Erase Device",
+    command=lambda: erase_flash(option.get()), style="C.TButton")
+upload_button.place(relx=0.5, rely=0.6, anchor=CENTER)
 
 upload_button = ttk.Button(window, text="Upload Firmware",
     command=lambda: upload_from_github(option.get()), style="C.TButton")
