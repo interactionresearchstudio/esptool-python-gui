@@ -80,7 +80,7 @@ def serial_ports():
         ports = glob.glob('/dev/tty[A-Za-z]*')
     elif sys.platform.startswith('darwin'):
         print("mac")
-        ports = glob.glob('/dev/tty.*')
+        ports = glob.glob('/dev/cu.*')
     else:
         raise EnvironmentError('Unsupported platform')
 
