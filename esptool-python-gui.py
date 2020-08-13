@@ -19,7 +19,7 @@ esptool_options = ['--chip', 'esp32',
 'write_flash', '-z', '--flash_mode', 'dio',
 '--flash_freq', '80m',
 '--flash_size', 'detect',
-'0x10000', 'app.ino.bin'
+'0x0000', 'app.ino.bin'
 ]
 
 esptool_erase_options = ['--chip', 'esp32',
@@ -80,7 +80,7 @@ def serial_ports():
         ports = glob.glob('/dev/tty[A-Za-z]*')
     elif sys.platform.startswith('darwin'):
         print("mac")
-        ports = glob.glob('/dev/tty.*')
+        ports = glob.glob('/dev/cu.*')
     else:
         raise EnvironmentError('Unsupported platform')
 
