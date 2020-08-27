@@ -8,6 +8,9 @@ import sys
 import glob
 from tkinter import *
 from tkinter import ttk
+import os, ssl
+if (not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None)):
+	ssl._create_default_https_context = ssl._create_unverified_context
 
 github_api_url = 'https://api.github.com/repos/interactionresearchstudio/ESP32-SOCKETIO/releases'
 
