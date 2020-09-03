@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['esptool-python-gui.py'],
-             pathex=['/Users/admin/Documents/IRS/SCADS/esptool-python-gui'],
+             pathex=['/Users/mikevanis/esptool-python-gui-mikevanis'],
              binaries=[],
              datas=[],
              hiddenimports=[],

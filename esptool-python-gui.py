@@ -6,16 +6,10 @@ import os
 import serial
 import sys
 import glob
-from kivy.app import App
 import ssl
 from threading import Thread
+import wx
 
-# Kivy imports
-from kivy.uix.label import Label
-from kivy.uix.dropdown import DropDown
-from kivy.uix.button import Button
-from kivy.uix.gridlayout import GridLayout
-from kivy.core.window import Window
 
 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -165,103 +159,34 @@ class EspToolManager(Thread):
         # return new_list
 
 
-class MainPage(GridLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.current_port = " "
+class AppFrame(wx.Frame):
+    def __init__(self, *args, **kw):
+        super(AppFrame, self).__init__(*args, **kw)
+        pnl = wx.Panel(self)
 
-        self.cols = 1
-        self.padding = 40
-        self.spacing = (0, 100)
+        # put some text with a larger bold font on it
+        st = wx.StaticText(pnl, label="IRS Firmware Uploader")
+        font = st.GetFont()
+        font.PointSize += 10
+        font = font.Bold()
+        st.SetFont(font)
 
-        # Title
-        self.add_widget(Label(text="[b]IRS Firmware Uploader[/b]", font_size='20sp', markup=True))
+        # and create a sizer to manage the layout of child widgets
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(st, wx.SizerFlags().Border(wx.TOP | wx.LEFT, 25))
+        pnl.SetSizer(sizer)
 
-        # Status label
-        self.status_label = Label(text="Idle", markup=True)
-        self.add_widget(self.status_label)
+        # and a status bar
+        self.CreateStatusBar()
+        self.SetStatusText("Idle")
 
-        # Dropdown
-        self.serial_dropdown = DropDown()
-        self.dropdown_button = Button(text="Select Serial Port")
-        self.dropdown_button.bind(on_release=self.serial_dropdown.open)
-        self.serial_dropdown.bind(on_select=lambda instance, x: setattr(self.dropdown_button, 'text', x))
-        self.add_widget(self.dropdown_button)
-
-        # Refresh serial ports
-        self.refresh_serial_ports_button = Button(text="Refresh Serial Ports")
-        self.refresh_serial_ports_button.bind(on_release=lambda instance: self.get_serial_list())
-        self.add_widget(self.refresh_serial_ports_button)
-
-        # Upload button
-        self.upload_button = Button(text="Upload Firmware", background_color=[66/255, 245/255, 129/255, 1])
-        self.upload_button.bind(on_release=lambda btn: self.upload_firmware())
-        self.add_widget(self.upload_button)
-
-        # Erase button
-        self.erase_button = Button(text="Wipe Device")
-        self.erase_button.bind(on_release=lambda btn: self.erase_device())
-        self.add_widget(self.erase_button)
-
-        self.get_serial_list()
-
-        Window.size = (400, 600)
-
-    def select_port(self, port):
-        self.current_port = port
-        self.serial_dropdown.select(port)
-
-    def get_serial_list(self):
-        self.refresh_serial_ports_button.disabled = True
-        thread = EspToolManager(EspToolManager.get_serial_list, self.on_serial_update)
-        thread.start()
-
-    def on_serial_update(self, serial_list):
-        self.serial_dropdown.clear_widgets()
-        for port in serial_list:
-            btn = Button(text=port, size_hint_y=None, height=60)
-            btn.bind(on_release=lambda _btn: self.select_port(_btn.text))
-            self.serial_dropdown.add_widget(btn)
-        self.refresh_serial_ports_button.disabled = False
-
-    def upload_firmware(self):
-        self.upload_button.disabled = True
-        setattr(self.status_label, 'text', 'Uploading firmware...')
-        thread = EspToolManager(EspToolManager.upload_from_github, self.on_upload_exit, port=self.current_port)
-        thread.start()
-
-    def erase_device(self):
-        self.erase_button.disabled = True
-        setattr(self.status_label, 'text', 'Uploading firmware...')
-        thread = EspToolManager(EspToolManager.erase_flash, self.on_upload_exit, port=self.current_port)
-        thread.start()
-
-    def on_upload_exit(self, result):
-        if result == 0:
-            setattr(self.status_label, 'text', '[color=00ff00]Success![/color]')
-            print('Success')
-        elif result == 1:
-            setattr(self.status_label, 'text', '[color=ff0000]Error finding firmware![/color]')
-            print('Error finding firmware')
-        elif result == 2:
-            setattr(self.status_label, 'text', '[color=ff0000]Error downloading firmware![/color]')
-            print('Error downloading firmware')
-        elif result == 3:
-            setattr(self.status_label, 'text', '[color=ff0000]Error uploading to device![/color]')
-            print('Error uploading to device')
-        elif result == 4:
-            setattr(self.status_label, 'text', '[color=ff0000]Error erasing device![/color]')
-            setattr(self.status_label, 'text', 'Error erasing device!')
-            print('Error erasing device')
-        self.erase_button.disabled = False
-        self.upload_button.disabled = False
+    def OnExit(self, event):
+        """Close the frame, terminating the application."""
+        self.Close(True)
 
 
-class IrsFirmwareUploader(App):
-    def build(self):
-        return MainPage()
-
-
-if __name__ == "__main__":
-    irs_firmware_uploader = IrsFirmwareUploader()
-    irs_firmware_uploader.run()
+if __name__ == '__main__':
+    app = wx.App()
+    frm = AppFrame(None, title='IRS Firmware Uploader')
+    frm.Show()
+    app.MainLoop()
