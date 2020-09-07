@@ -23,7 +23,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='IRS-Firmware-Uploader',
+          name='YoYoMachines-Firmware-Uploader',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -32,6 +32,10 @@ exe = EXE(pyz,
           runtime_tmpdir=None,
           console=False )
 app = BUNDLE(exe,
-             name='IRS-Firmware-Uploader.app',
+             name='YoYoMachines-Firmware-Uploader.app',
              icon=None,
-             bundle_identifier=None)
+             bundle_identifier=None,
+             info_plist={
+                'NSHighResolutionCapable': 'True'
+                }
+             )
