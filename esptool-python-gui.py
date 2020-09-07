@@ -10,7 +10,6 @@ import ssl
 from threading import Thread
 import wx
 
-
 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
     ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -56,7 +55,6 @@ class EspToolManager(Thread):
         try:
             with urllib.request.urlopen(api_url) as url:
                 data = json.loads(url.read().decode())
-                print(data[0])
                 return data[0]['assets'][0]['browser_download_url']
         except Exception as e:
             print(e)
@@ -72,7 +70,7 @@ class EspToolManager(Thread):
             # return True
         except Exception as e:
             print(e)
-            self.callback(1)
+            self.callback(4)
             # return e
 
     @staticmethod
@@ -85,14 +83,11 @@ class EspToolManager(Thread):
                 A list of the serial ports available on the system
         """
         if sys.platform.startswith('win'):
-            print("win")
             ports = ['COM%s' % (i + 1) for i in range(256)]
         elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
             # this excludes your current terminal "/dev/tty"
-            print("linux")
             ports = glob.glob('/dev/tty[A-Za-z]*')
         elif sys.platform.startswith('darwin'):
-            print("mac")
             ports = glob.glob('/dev/cu.*')
         else:
             raise EnvironmentError('Unsupported platform')
@@ -147,46 +142,207 @@ class EspToolManager(Thread):
             # return 0
         except Exception as e:
             os.unlink(fp.name)
+            print("Error uploading to device!")
             print(e)
             self.callback(3)
             # return 3
 
     # Update serial list dropdown
     def get_serial_list(self):
-        print("Update serial list")
         new_list = self.serial_ports()
         self.callback(new_list)
         # return new_list
 
 
-class AppFrame(wx.Frame):
-    def __init__(self, *args, **kw):
-        super(AppFrame, self).__init__(*args, **kw)
-        pnl = wx.Panel(self)
+class RedirectText:
+    def __init__(self, text_ctrl):
+        self.__out = text_ctrl
 
-        # put some text with a larger bold font on it
-        st = wx.StaticText(pnl, label="IRS Firmware Uploader")
-        font = st.GetFont()
-        font.PointSize += 10
-        font = font.Bold()
-        st.SetFont(font)
+    def write(self, string):
+        if string.startswith("\r"):
+            # carriage return -> remove last line i.e. reset position to start of last line
+            current_value = self.__out.GetValue()
+            last_newline = current_value.rfind("\n")
+            new_value = current_value[:last_newline + 1]  # preserve \n
+            new_value += string[1:]  # chop off leading \r
+            wx.CallAfter(self.__out.SetValue, new_value)
+        else:
+            wx.CallAfter(self.__out.AppendText, string)
 
-        # and create a sizer to manage the layout of child widgets
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(st, wx.SizerFlags().Border(wx.TOP | wx.LEFT, 25))
-        pnl.SetSizer(sizer)
+    # noinspection PyMethodMayBeStatic
+    def flush(self):
+        # noinspection PyStatementEffect
+        None
 
-        # and a status bar
-        self.CreateStatusBar()
-        self.SetStatusText("Idle")
 
-    def OnExit(self, event):
-        """Close the frame, terminating the application."""
-        self.Close(True)
+class MainFrame(wx.Frame):
+
+    def __init__(self, parent):
+        wx.Frame.__init__(self, parent, id=wx.ID_ANY, title="Yo-Yo Machines", pos=wx.DefaultPosition,
+                          size=wx.Size(486, 504), style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
+
+        self.current_serial = ""
+        self.erase_flash = False
+
+        self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
+
+        root_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.title_label = wx.StaticText(self, wx.ID_ANY, u"Yo-Yo Machines Firmware Uploader", wx.DefaultPosition,
+                                         wx.DefaultSize, 0)
+        self.title_label.Wrap(-1)
+
+        root_sizer.Add(self.title_label, 0, wx.ALIGN_CENTER | wx.ALL, 5)
+
+        self.static_line = wx.StaticLine(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL)
+        root_sizer.Add(self.static_line, 0, wx.ALL | wx.EXPAND, 5)
+
+        flexgrid_sizer = wx.FlexGridSizer(4, 2, 0, 0)
+        flexgrid_sizer.AddGrowableCol(1)
+        flexgrid_sizer.AddGrowableRow(2)
+        flexgrid_sizer.SetFlexibleDirection(wx.BOTH)
+        flexgrid_sizer.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
+
+        self.serial_label = wx.StaticText(self, wx.ID_ANY, u"Serial Port", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.serial_label.Wrap(-1)
+
+        flexgrid_sizer.Add(self.serial_label, 0, wx.ALL, 5)
+
+        serial_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.serial_list = []
+        self.serial_choice = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, self.serial_list, 0)
+        self.serial_choice.SetSelection(0)
+        serial_sizer.Add(self.serial_choice, 1, wx.ALL, 5)
+
+        self.serial_refresh_button = wx.Button(self, wx.ID_ANY, u"Refresh List", wx.DefaultPosition, wx.DefaultSize, 0)
+        serial_sizer.Add(self.serial_refresh_button, 0, wx.ALL, 5)
+
+        flexgrid_sizer.Add(serial_sizer, 1, wx.EXPAND, 5)
+
+        self.firmware_label = wx.StaticText(self, wx.ID_ANY, u"Firmware", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.firmware_label.Wrap(-1)
+
+        flexgrid_sizer.Add(self.firmware_label, 0, wx.ALL, 5)
+
+        self.firmware_list = []
+        self.firmware_choice = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, self.firmware_list, 0)
+        self.firmware_choice.SetSelection(0)
+        flexgrid_sizer.Add(self.firmware_choice, 0, wx.ALL | wx.EXPAND, 5)
+
+        self.erase_label = wx.StaticText(self, wx.ID_ANY, u"Erase data", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.erase_label.Wrap(-1)
+
+        flexgrid_sizer.Add(self.erase_label, 0, wx.ALL, 5)
+
+        self.erase_checkbox = wx.CheckBox(self, wx.ID_ANY, u"Yes, erase all data on the device.", wx.DefaultPosition,
+                                          wx.DefaultSize, 0)
+        flexgrid_sizer.Add(self.erase_checkbox, 0, wx.ALL, 5)
+
+        flexgrid_sizer.Add((0, 0), 1, wx.EXPAND, 5)
+
+        self.upload_button = wx.Button(self, wx.ID_ANY, u"Upload", wx.DefaultPosition, wx.DefaultSize, 0)
+
+        self.upload_button.SetDefault()
+        flexgrid_sizer.Add(self.upload_button, 0, wx.ALL | wx.EXPAND, 5)
+
+        root_sizer.Add(flexgrid_sizer, 0, wx.EXPAND, 5)
+
+        self.console_text = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize,
+                                        wx.HSCROLL | wx.TE_MULTILINE | wx.TE_READONLY)
+        root_sizer.Add(self.console_text, 1, wx.ALL | wx.EXPAND, 5)
+
+        self.SetSizer(root_sizer)
+        self.Layout()
+        self.status_bar = self.CreateStatusBar(1, wx.STB_SIZEGRIP, wx.ID_ANY)
+
+        self.Centre(wx.BOTH)
+
+        sys.stdout = RedirectText(self.console_text)
+
+        self.status_bar.SetStatusText("Idle")
+
+        # Connect Events
+        self.serial_choice.Bind(wx.EVT_CHOICE, self.on_serial_choice)
+        self.serial_refresh_button.Bind(wx.EVT_BUTTON, self.on_serial_refresh)
+        self.firmware_choice.Bind(wx.EVT_CHOICE, self.on_firmware_choice)
+        self.erase_checkbox.Bind(wx.EVT_CHECKBOX, self.on_checkbox)
+        self.upload_button.Bind(wx.EVT_BUTTON, self.on_upload_click)
+
+        self.update_serial_list()
+
+    def __del__(self):
+        pass
+
+    def populate_serial_list(self, new_list):
+        self.serial_list = new_list
+        self.serial_choice.Clear()
+        self.serial_choice.AppendItems(self.serial_list)
+
+    def populate_firmware_list(self, new_list):
+        self.firmware_list = new_list
+        self.firmware_choice.Clear()
+        self.firmware_choice.AppendItems(self.firmware_list)
+
+    def update_status(self, result):
+        print(result)
+        if result == 0:
+            self.status_bar.SetStatusText("Success!")
+        elif result == 1:
+            self.status_bar.SetStatusText("Error finding firmware!")
+        elif result == 2:
+            self.status_bar.SetStatusText("Error downloading firmware!")
+        elif result == 3:
+            self.status_bar.SetStatusText("Error uploading to device!")
+        elif result == 4:
+            self.status_bar.SetStatusText("Error erasing data!")
+        self.upload_button.Enable()
+
+    def upload_firmware(self, result):
+        self.console_text.SetValue("")
+        if result == 0:
+            self.status_bar.SetStatusText("Uploading firmware...")
+            thread = EspToolManager(EspToolManager.upload_from_github,
+                                    lambda res: self.update_status(res),
+                                    port=self.current_serial)
+            thread.start()
+        else:
+            self.update_status(result)
+
+    def update_serial_list(self):
+        thread = EspToolManager(EspToolManager.get_serial_list, lambda new_list: self.populate_serial_list(new_list))
+        thread.start()
+
+    # Event handlers
+    def on_serial_refresh(self, event):
+        self.update_serial_list()
+        event.Skip()
+
+    def on_firmware_choice(self, event):
+        event.Skip()
+
+    def on_serial_choice(self, event):
+        choice = event.GetEventObject()
+        self.current_serial = choice.GetString(choice.GetSelection())
+
+    def on_checkbox(self, event):
+        checkbox = event.GetEventObject()
+        self.erase_flash = checkbox.GetValue()
+        event.Skip()
+
+    def on_upload_click(self, event):
+        self.upload_button.Disable()
+        if self.erase_flash is True:
+            self.status_bar.SetStatusText("Erasing data...")
+            thread = EspToolManager(EspToolManager.erase_flash, self.upload_firmware, port=self.current_serial)
+            thread.start()
+        else:
+            self.upload_firmware(0)
+        event.Skip()
 
 
 if __name__ == '__main__':
     app = wx.App()
-    frm = AppFrame(None, title='IRS Firmware Uploader')
+    frm = MainFrame(None)
     frm.Show()
     app.MainLoop()
