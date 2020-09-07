@@ -20,7 +20,7 @@ jobs:
           pip install -r requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller -F -w -n IRS-Firmware-Uploader esptool-python-gui.py
+          pyinstaller -F -w -n YoYoMachines-Firmware-Uploader esptool-python-gui.py
       - uses: actions/upload-artifact@v2
         with:
           name: Windows
@@ -41,7 +41,7 @@ jobs:
           pip install -r requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller -F -w -n IRS-Firmware-Uploader esptool-python-gui.py
+          pyinstaller -F -w -n YoYoMachines-Firmware-Uploader esptool-python-gui.py
       - name: See dist directory
         run: ls dist
       - uses: actions/upload-artifact@v2
@@ -57,18 +57,15 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.8'
       - name: Install requirements
         run: |
           pip install -r requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller -F -w -n IRS-Firmware-Uploader esptool-python-gui.py
+          pyinstaller YoYoMachines-Firmware-Uploader.spec
       - name: See dist directory
         run: ls dist
-      - name: Move app
-        run: |
-          mv dist/IRS-Firmware-Uploader.app dist/IRS-Firmware-Uploader-macOS.app
       - uses: actions/upload-artifact@v2
         with:
           name: macOS
