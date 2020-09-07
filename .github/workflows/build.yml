@@ -24,7 +24,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Windows
-          path: dist/IRS-Firmware-Uploader.exe
+          path: dist/YoYoMachines-Firmware-Uploader.exe
 
   build-windows-x86:
     runs-on: windows-2019
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Windows-x86
-          path: dist/IRS-Firmware-Uploader.exe
+          path: dist/YoYoMachines-Firmware-Uploader.exe
 
   build-macos:
     runs-on: macOS-latest
