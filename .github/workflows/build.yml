@@ -65,7 +65,7 @@ jobs:
         run: |
           pyinstaller YoYoMachines-Firmware-Uploader.spec
       - name: Set permissions
-        run: chmod 755 dist/
+        run: chmod -R 755 dist/
       - uses: actions/upload-artifact@v2
         with:
           name: macOS
