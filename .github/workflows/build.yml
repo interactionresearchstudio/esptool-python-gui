@@ -66,7 +66,9 @@ jobs:
           pyinstaller YoYoMachines-Firmware-Uploader.spec
       - name: Set permissions
         run: chmod -R 755 dist/YoYoMachines-Firmware-Uploader.app
+      - name: Remove binary
+        run: rm dist/YoYoMachines-Firmware-Uploader
       - uses: actions/upload-artifact@v2
         with:
           name: YoYoMachines-Firmware-Uploader-macOS
-          path: dist/YoYoMachines-Firmware-Uploader.app
+          path: dist/
