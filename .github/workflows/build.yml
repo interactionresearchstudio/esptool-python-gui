@@ -23,7 +23,7 @@ jobs:
           pyinstaller -F -w -n YoYoMachines-Firmware-Uploader esptool-python-gui.py
       - uses: actions/upload-artifact@v2
         with:
-          name: Windows
+          name: YoYoMachines-Firmware-Uploader-Windows
           path: dist/YoYoMachines-Firmware-Uploader.exe
 
   build-windows-x86:
@@ -46,7 +46,7 @@ jobs:
         run: ls dist
       - uses: actions/upload-artifact@v2
         with:
-          name: Windows-x86
+          name: YoYoMachines-Firmware-Uploader-Windows-x86
           path: dist/YoYoMachines-Firmware-Uploader.exe
 
   build-macos:
@@ -65,12 +65,8 @@ jobs:
         run: |
           pyinstaller YoYoMachines-Firmware-Uploader.spec
       - name: Set permissions
-        run: chmod -R 755 dist/
+        run: chmod -R 755 dist/YoYoMachines-Firmware-Uploader.app
       - uses: actions/upload-artifact@v2
         with:
-          name: macOS
-          path: dist/
-      - uses: actions/upload-artifact@v2
-        with:
-          name: macOS-debug
-          path: dist/
+          name: YoYoMachines-Firmware-Uploader-macOS
+          path: dist/YoYoMachines-Firmware-Uploader.app
