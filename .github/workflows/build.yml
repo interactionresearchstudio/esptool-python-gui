@@ -57,16 +57,20 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.8'
+          python-version: '3.7.8'
       - name: Install requirements
         run: |
           pip install -r requirements.txt
       - name: Run PyInstaller
         run: |
           pyinstaller YoYoMachines-Firmware-Uploader.spec
-      - name: See dist directory
-        run: ls dist
+      - name: Set permissions
+        run: chmod 755 dist/
       - uses: actions/upload-artifact@v2
         with:
           name: macOS
+          path: dist/
+      - uses: actions/upload-artifact@v2
+        with:
+          name: macOS-debug
           path: dist/

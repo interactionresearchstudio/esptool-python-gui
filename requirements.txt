@@ -3,8 +3,10 @@ certifi==2020.6.20
 ecdsa==0.16.0
 esptool==2.8
 macholib==1.14
+modulegraph==0.18
 numpy==1.19.1
 Pillow==7.2.0
+py2app==0.21
 pyaes==1.6.1
 pyinstaller==4.0
 pyinstaller-hooks-contrib==2020.7

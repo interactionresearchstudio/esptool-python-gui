@@ -36,12 +36,13 @@ esptool_erase_options = ['--chip', 'esp32',
 
 
 class EspToolManager(Thread):
-    def __init__(self, runnable, callback, port=None):
+    def __init__(self, runnable, callback, port=None, erase=False):
         Thread.__init__(self)
         self.runnable = runnable
         self.callback = callback
         self.port = port
         self.daemon = True
+        self.erase = erase
 
     def run(self):
         if self.port is None:
@@ -59,19 +60,6 @@ class EspToolManager(Thread):
         except Exception as e:
             print(e)
             return None
-
-    # Wipe device flash
-    def erase_flash(self, serial_port):
-        # Write to device with esptool
-        esptool_erase_options[3] = serial_port
-        try:
-            esptool_main(esptool_erase_options)
-            self.callback(0)
-            # return True
-        except Exception as e:
-            print(e)
-            self.callback(4)
-            # return e
 
     @staticmethod
     def serial_ports():
@@ -136,6 +124,8 @@ class EspToolManager(Thread):
         esptool_erase_options[3] = serial_port
         esptool_options[-1] = fp.name
         try:
+            if self.erase:
+                esptool_main(esptool_erase_options)
             esptool_main(esptool_options)
             os.unlink(fp.name)
             self.callback(0)
@@ -203,7 +193,7 @@ class MainFrame(wx.Frame):
         flexgrid_sizer.SetFlexibleDirection(wx.BOTH)
         flexgrid_sizer.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
 
-        self.serial_label = wx.StaticText(self, wx.ID_ANY, u"Serial Port", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.serial_label = wx.StaticText(self, wx.ID_ANY, u"Device", wx.DefaultPosition, wx.DefaultSize, 0)
         self.serial_label.Wrap(-1)
 
         flexgrid_sizer.Add(self.serial_label, 0, wx.ALL, 5)
@@ -220,7 +210,7 @@ class MainFrame(wx.Frame):
 
         flexgrid_sizer.Add(serial_sizer, 1, wx.EXPAND, 5)
 
-        self.firmware_label = wx.StaticText(self, wx.ID_ANY, u"Firmware", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.firmware_label = wx.StaticText(self, wx.ID_ANY, u"Program Version", wx.DefaultPosition, wx.DefaultSize, 0)
         self.firmware_label.Wrap(-1)
 
         flexgrid_sizer.Add(self.firmware_label, 0, wx.ALL, 5)
@@ -230,12 +220,12 @@ class MainFrame(wx.Frame):
         self.firmware_choice.SetSelection(0)
         flexgrid_sizer.Add(self.firmware_choice, 0, wx.ALL | wx.EXPAND, 5)
 
-        self.erase_label = wx.StaticText(self, wx.ID_ANY, u"Erase data", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.erase_label = wx.StaticText(self, wx.ID_ANY, u"Erase WiFi Details", wx.DefaultPosition, wx.DefaultSize, 0)
         self.erase_label.Wrap(-1)
 
         flexgrid_sizer.Add(self.erase_label, 0, wx.ALL, 5)
 
-        self.erase_checkbox = wx.CheckBox(self, wx.ID_ANY, u"Yes, erase all data on the device.", wx.DefaultPosition,
+        self.erase_checkbox = wx.CheckBox(self, wx.ID_ANY, u"Yes, erase WiFi details on the device.", wx.DefaultPosition,
                                           wx.DefaultSize, 0)
         flexgrid_sizer.Add(self.erase_checkbox, 0, wx.ALL, 5)
 
@@ -288,26 +278,29 @@ class MainFrame(wx.Frame):
         print(result)
         if result == 0:
             self.status_bar.SetStatusText("Success!")
+            wx.CallAfter(self.console_text.AppendText, "Success!")
         elif result == 1:
             self.status_bar.SetStatusText("Error finding firmware!")
+            wx.CallAfter(self.console_text.AppendText, "Error finding firmware!")
         elif result == 2:
             self.status_bar.SetStatusText("Error downloading firmware!")
+            wx.CallAfter(self.console_text.AppendText, "Error downloading firmware!")
         elif result == 3:
             self.status_bar.SetStatusText("Error uploading to device!")
+            wx.CallAfter(self.console_text.AppendText, "Error uploading to device!")
         elif result == 4:
             self.status_bar.SetStatusText("Error erasing data!")
+            wx.CallAfter(self.console_text.AppendText, "Error erasing data!")
         self.upload_button.Enable()
 
-    def upload_firmware(self, result):
+    def upload_firmware(self):
         self.console_text.SetValue("")
-        if result == 0:
-            self.status_bar.SetStatusText("Uploading firmware...")
-            thread = EspToolManager(EspToolManager.upload_from_github,
-                                    lambda res: self.update_status(res),
-                                    port=self.current_serial)
-            thread.start()
-        else:
-            self.update_status(result)
+        self.status_bar.SetStatusText("Uploading firmware...")
+        wx.CallAfter(self.console_text.AppendText, "Uploading firmware...")
+        thread = EspToolManager(EspToolManager.upload_from_github,
+                                lambda res: self.update_status(res),
+                                port=self.current_serial, erase=self.erase_flash)
+        thread.start()
 
     def update_serial_list(self):
         thread = EspToolManager(EspToolManager.get_serial_list, lambda new_list: self.populate_serial_list(new_list))
@@ -332,12 +325,7 @@ class MainFrame(wx.Frame):
 
     def on_upload_click(self, event):
         self.upload_button.Disable()
-        if self.erase_flash is True:
-            self.status_bar.SetStatusText("Erasing data...")
-            thread = EspToolManager(EspToolManager.erase_flash, self.upload_firmware, port=self.current_serial)
-            thread.start()
-        else:
-            self.upload_firmware(0)
+        self.upload_firmware()
         event.Skip()
 
 
