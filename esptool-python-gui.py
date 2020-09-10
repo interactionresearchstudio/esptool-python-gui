@@ -37,11 +37,12 @@ esptool_erase_options = ['--chip', 'esp32',
 
 
 class EspToolManager(Thread):
-    def __init__(self, runnable, callback, port=None, erase=False):
+    def __init__(self, runnable, callback, port=None, erase=False, url=None):
         Thread.__init__(self)
         self.runnable = runnable
         self.callback = callback
         self.port = port
+        self.url = url
         self.daemon = True
         self.erase = erase
 
@@ -49,7 +50,7 @@ class EspToolManager(Thread):
         if self.port is None:
             self.runnable(self)
         else:
-            self.runnable(self, self.port)
+            self.runnable(self, self.port, self.url)
 
     # Get bin download url based on GitHub API URL
     @staticmethod
@@ -116,9 +117,9 @@ class EspToolManager(Thread):
             return None
 
     # Upload bin file from GitHub to device
-    def upload_from_github(self, serial_port):
+    def upload_from_github(self, serial_port, url):
         # Get bin file URL from GitHub
-        bin_url = self.get_bin_url(github_api_url)
+        bin_url = self.get_bin_url(url)
         if bin_url is None:
             print("Error finding firmware!")
             self.callback(1)
@@ -222,7 +223,7 @@ class MainFrame(wx.Frame):
 
         flexgrid_sizer.Add(serial_sizer, 1, wx.EXPAND, 5)
 
-        self.projects_label = wx.StaticText(self, wx.ID_ANY, u"Program Version", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.projects_label = wx.StaticText(self, wx.ID_ANY, u"Project", wx.DefaultPosition, wx.DefaultSize, 0)
         self.projects_label.Wrap(-1)
 
         flexgrid_sizer.Add(self.projects_label, 0, wx.ALL, 5)
@@ -283,17 +284,18 @@ class MainFrame(wx.Frame):
         self.serial_list = new_list
         self.serial_choice.Clear()
         self.serial_choice.AppendItems(self.serial_list)
+        self.current_serial = self.serial_list[0]
 
     def populate_projects_list(self, new_list):
-        print(new_list)
-        self.projects_list = []
-        for item in new_list:
-            self.projects_list.append(item['name'])
+        self.projects_list = new_list
+        project_names = []
+        for item in self.projects_list:
+            project_names.append(item['name'])
         self.projects_choice.Clear()
-        self.projects_choice.AppendItems(self.projects_list)
+        self.projects_choice.AppendItems(project_names)
+        self.current_project_url = self.projects_list[0]['releaseUrl']
 
     def update_status(self, result):
-        print(result)
         if result == 0:
             self.status_bar.SetStatusText("Success!")
             wx.CallAfter(self.console_text.AppendText, "Success!")
@@ -317,7 +319,7 @@ class MainFrame(wx.Frame):
         wx.CallAfter(self.console_text.AppendText, "Uploading firmware...")
         thread = EspToolManager(EspToolManager.upload_from_github,
                                 lambda res: self.update_status(res),
-                                port=self.current_serial, erase=self.erase_flash)
+                                port=self.current_serial, erase=self.erase_flash, url=self.current_project_url)
         thread.start()
 
     def update_serial_list(self):
@@ -325,7 +327,8 @@ class MainFrame(wx.Frame):
         thread.start()
 
     def update_projects_list(self):
-        thread = EspToolManager(EspToolManager.get_projects_list, lambda new_list: self.populate_projects_list(new_list))
+        thread = EspToolManager(EspToolManager.get_projects_list,
+                                lambda new_list: self.populate_projects_list(new_list))
         thread.start()
 
     # Event handlers
@@ -338,7 +341,6 @@ class MainFrame(wx.Frame):
         for project in self.projects_list:
             if project['name'] == choice:
                 self.current_project_url = project['releaseUrl']
-                print(self.current_project_url)
 
     def on_serial_choice(self, event):
         choice = event.GetEventObject()
