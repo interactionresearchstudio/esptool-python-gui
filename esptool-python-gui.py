@@ -14,6 +14,7 @@ if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverif
     ssl._create_default_https_context = ssl._create_unverified_context
 
 github_api_url = 'https://api.github.com/repos/interactionresearchstudio/ESP32-SOCKETIO/releases'
+server_projects_url = 'https://irs-socket-server-staging.herokuapp.com/projects'
 
 esptool_options = ['--chip', 'esp32',
                    '--port', '/dev/cu.myserial',
@@ -57,6 +58,17 @@ class EspToolManager(Thread):
             with urllib.request.urlopen(api_url) as url:
                 data = json.loads(url.read().decode())
                 return data[0]['assets'][0]['browser_download_url']
+        except Exception as e:
+            print(e)
+            return None
+
+    # Get bin download url based on GitHub API URL
+    @staticmethod
+    def get_projects():
+        try:
+            with urllib.request.urlopen(server_projects_url) as url:
+                data = json.loads(url.read().decode())
+                return data['projects']
         except Exception as e:
             print(e)
             return None
@@ -110,14 +122,12 @@ class EspToolManager(Thread):
         if bin_url is None:
             print("Error finding firmware!")
             self.callback(1)
-            # return 1
 
         # Download bin file and save temporarily
         fp = self.get_bin_file(bin_url)
         if fp is None:
             print("Error downloading firmware!")
             self.callback(2)
-            # return 2
 
         # Write to device with esptool
         esptool_options[3] = serial_port
@@ -129,19 +139,20 @@ class EspToolManager(Thread):
             esptool_main(esptool_options)
             os.unlink(fp.name)
             self.callback(0)
-            # return 0
         except Exception as e:
             os.unlink(fp.name)
             print("Error uploading to device!")
             print(e)
             self.callback(3)
-            # return 3
 
     # Update serial list dropdown
     def get_serial_list(self):
         new_list = self.serial_ports()
         self.callback(new_list)
-        # return new_list
+
+    def get_projects_list(self):
+        new_list = self.get_projects()
+        self.callback(new_list)
 
 
 class RedirectText:
@@ -172,6 +183,7 @@ class MainFrame(wx.Frame):
                           size=wx.Size(486, 504), style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 
         self.current_serial = ""
+        self.current_project_url = ""
         self.erase_flash = False
 
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
@@ -210,22 +222,24 @@ class MainFrame(wx.Frame):
 
         flexgrid_sizer.Add(serial_sizer, 1, wx.EXPAND, 5)
 
-        self.firmware_label = wx.StaticText(self, wx.ID_ANY, u"Program Version", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.firmware_label.Wrap(-1)
+        self.projects_label = wx.StaticText(self, wx.ID_ANY, u"Program Version", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.projects_label.Wrap(-1)
 
-        flexgrid_sizer.Add(self.firmware_label, 0, wx.ALL, 5)
+        flexgrid_sizer.Add(self.projects_label, 0, wx.ALL, 5)
 
-        self.firmware_list = []
-        self.firmware_choice = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, self.firmware_list, 0)
-        self.firmware_choice.SetSelection(0)
-        flexgrid_sizer.Add(self.firmware_choice, 0, wx.ALL | wx.EXPAND, 5)
+        self.projects_list = []
+        self.projects_choice = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, self.projects_list, 0)
+        self.projects_choice.SetSelection(0)
+        flexgrid_sizer.Add(self.projects_choice, 0, wx.ALL | wx.EXPAND, 5)
 
         self.erase_label = wx.StaticText(self, wx.ID_ANY, u"Erase WiFi Details", wx.DefaultPosition, wx.DefaultSize, 0)
         self.erase_label.Wrap(-1)
 
         flexgrid_sizer.Add(self.erase_label, 0, wx.ALL, 5)
 
-        self.erase_checkbox = wx.CheckBox(self, wx.ID_ANY, u"Yes, erase WiFi details on the device.", wx.DefaultPosition,
+        self.erase_checkbox = wx.CheckBox(self, wx.ID_ANY,
+                                          u"Yes, erase WiFi details on the device.",
+                                          wx.DefaultPosition,
                                           wx.DefaultSize, 0)
         flexgrid_sizer.Add(self.erase_checkbox, 0, wx.ALL, 5)
 
@@ -255,11 +269,12 @@ class MainFrame(wx.Frame):
         # Connect Events
         self.serial_choice.Bind(wx.EVT_CHOICE, self.on_serial_choice)
         self.serial_refresh_button.Bind(wx.EVT_BUTTON, self.on_serial_refresh)
-        self.firmware_choice.Bind(wx.EVT_CHOICE, self.on_firmware_choice)
+        self.projects_choice.Bind(wx.EVT_CHOICE, self.on_projects_choice)
         self.erase_checkbox.Bind(wx.EVT_CHECKBOX, self.on_checkbox)
         self.upload_button.Bind(wx.EVT_BUTTON, self.on_upload_click)
 
         self.update_serial_list()
+        self.update_projects_list()
 
     def __del__(self):
         pass
@@ -269,10 +284,13 @@ class MainFrame(wx.Frame):
         self.serial_choice.Clear()
         self.serial_choice.AppendItems(self.serial_list)
 
-    def populate_firmware_list(self, new_list):
-        self.firmware_list = new_list
-        self.firmware_choice.Clear()
-        self.firmware_choice.AppendItems(self.firmware_list)
+    def populate_projects_list(self, new_list):
+        print(new_list)
+        self.projects_list = []
+        for item in new_list:
+            self.projects_list.append(item['name'])
+        self.projects_choice.Clear()
+        self.projects_choice.AppendItems(self.projects_list)
 
     def update_status(self, result):
         print(result)
@@ -306,13 +324,21 @@ class MainFrame(wx.Frame):
         thread = EspToolManager(EspToolManager.get_serial_list, lambda new_list: self.populate_serial_list(new_list))
         thread.start()
 
+    def update_projects_list(self):
+        thread = EspToolManager(EspToolManager.get_projects_list, lambda new_list: self.populate_projects_list(new_list))
+        thread.start()
+
     # Event handlers
     def on_serial_refresh(self, event):
         self.update_serial_list()
         event.Skip()
 
-    def on_firmware_choice(self, event):
-        event.Skip()
+    def on_projects_choice(self, event):
+        choice = event.GetEventObject()
+        for project in self.projects_list:
+            if project['name'] == choice:
+                self.current_project_url = project['releaseUrl']
+                print(self.current_project_url)
 
     def on_serial_choice(self, event):
         choice = event.GetEventObject()
@@ -321,7 +347,6 @@ class MainFrame(wx.Frame):
     def on_checkbox(self, event):
         checkbox = event.GetEventObject()
         self.erase_flash = checkbox.GetValue()
-        event.Skip()
 
     def on_upload_click(self, event):
         self.upload_button.Disable()
