@@ -1,4 +1,4 @@
-name: Build Workflow
+name: Build
 
 on:
   push:
@@ -13,18 +13,18 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.7.9'
           architecture: 'x64'
       - name: Install requirements
         run: |
           pip install -r requirements.txt
       - name: Run PyInstaller
         run: |
-          python -m PyInstaller.__main__ -F -w -n IRS-Firmware-Uploader esptool-python-gui.py
+          pyinstaller -F -w -n YoYoMachines-Firmware-Uploader esptool-python-gui.py
       - uses: actions/upload-artifact@v2
         with:
-          name: Windows
-          path: dist/IRS-Firmware-Uploader.exe
+          name: YoYoMachines-Firmware-Uploader-Windows
+          path: dist/YoYoMachines-Firmware-Uploader.exe
 
   build-windows-x86:
     runs-on: windows-2019
@@ -34,20 +34,20 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.7.9'
           architecture: 'x86'
       - name: Install requirements
         run: |
           pip install -r requirements.txt
       - name: Run PyInstaller
         run: |
-          python -m PyInstaller.__main__ -F -w -n IRS-Firmware-Uploader esptool-python-gui.py
+          pyinstaller -F -w -n YoYoMachines-Firmware-Uploader esptool-python-gui.py
       - name: See dist directory
         run: ls dist
       - uses: actions/upload-artifact@v2
         with:
-          name: Windows-x86
-          path: dist/IRS-Firmware-Uploader.exe
+          name: YoYoMachines-Firmware-Uploader-Windows-x86
+          path: dist/YoYoMachines-Firmware-Uploader.exe
 
   build-macos:
     runs-on: macOS-latest
@@ -57,19 +57,18 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
+          python-version: '3.7.9'
       - name: Install requirements
         run: |
           pip install -r requirements.txt
       - name: Run PyInstaller
         run: |
-          python -m PyInstaller.__main__ -F -w -n IRS-Firmware-Uploader esptool-python-gui.py
-      - name: See dist directory
-        run: ls dist
-      - name: Move app
-        run: |
-          mv dist/IRS-Firmware-Uploader.app dist/IRS-Firmware-Uploader-macOS.app
+          pyinstaller YoYoMachines-Firmware-Uploader.spec
+      - name: Set permissions
+        run: chmod -R 755 dist/YoYoMachines-Firmware-Uploader.app
+      - name: Remove binary
+        run: rm dist/YoYoMachines-Firmware-Uploader
       - uses: actions/upload-artifact@v2
         with:
-          name: macOS
+          name: YoYoMachines-Firmware-Uploader-macOS
           path: dist/

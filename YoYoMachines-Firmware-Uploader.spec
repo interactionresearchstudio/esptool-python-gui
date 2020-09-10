@@ -4,7 +4,6 @@ block_cipher = None
 
 
 a = Analysis(['esptool-python-gui.py'],
-             pathex=['/Users/mikevanis/esptool-python-gui'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -23,7 +22,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='esptool-python-gui',
+          name='YoYoMachines-Firmware-Uploader',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -32,6 +31,10 @@ exe = EXE(pyz,
           runtime_tmpdir=None,
           console=False )
 app = BUNDLE(exe,
-             name='esptool-python-gui.app',
+             name='YoYoMachines-Firmware-Uploader.app',
              icon=None,
-             bundle_identifier=None)
+             bundle_identifier=None,
+             info_plist={
+                'NSHighResolutionCapable': 'True'
+                }
+             )
