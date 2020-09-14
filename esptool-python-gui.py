@@ -13,7 +13,6 @@ import wx
 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
     ssl._create_default_https_context = ssl._create_unverified_context
 
-github_api_url = 'https://api.github.com/repos/interactionresearchstudio/ESP32-SOCKETIO/releases'
 server_projects_url = 'https://irs-socket-server.herokuapp.com/projects'
 
 esptool_options = ['--chip', 'esp32',
@@ -62,7 +61,6 @@ class EspToolManager(Thread):
                 for asset in data[0]['assets']:
                     if asset['name'] == 'app-combined.bin':
                         bin_url = asset['browser_download_url']
-                        print(bin_url)
                         return bin_url
                 print('Error: No app-combined.bin in release.')
                 return bin_url
