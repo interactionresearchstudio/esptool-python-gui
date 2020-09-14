@@ -14,7 +14,7 @@ if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverif
     ssl._create_default_https_context = ssl._create_unverified_context
 
 github_api_url = 'https://api.github.com/repos/interactionresearchstudio/ESP32-SOCKETIO/releases'
-server_projects_url = 'https://irs-socket-server-staging.herokuapp.com/projects'
+server_projects_url = 'https://irs-socket-server.herokuapp.com/projects'
 
 esptool_options = ['--chip', 'esp32',
                    '--port', '/dev/cu.myserial',
