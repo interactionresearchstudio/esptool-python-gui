@@ -58,7 +58,14 @@ class EspToolManager(Thread):
         try:
             with urllib.request.urlopen(api_url) as url:
                 data = json.loads(url.read().decode())
-                return data[0]['assets'][0]['browser_download_url']
+                bin_url = None
+                for asset in data[0]['assets']:
+                    if asset['name'] == 'app-combined.bin':
+                        bin_url = asset['browser_download_url']
+                        print(bin_url)
+                        return bin_url
+                print('Error: No app-combined.bin in release.')
+                return bin_url
         except Exception as e:
             print(e)
             return None
