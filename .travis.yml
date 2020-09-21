@@ -6,7 +6,7 @@ jobs:
     osx_image: xcode9.4
     language: shell
 install: pip3 install --upgrade pip
-script: pip3 install -r requirements.txt && pyinstaller YoYoMachines-Firmware-Uploader.spec && zip -r YoYoMachines-Firmware-Uploader.app.zip YoYoMachines-Firmware-Uploader.app
+script: pip3 install -r requirements.txt && pyinstaller YoYoMachines-Firmware-Uploader.spec && zip -r dist/YoYoMachines-Firmware-Uploader.app.zip dist/YoYoMachines-Firmware-Uploader.app
 deploy:
   provider: releases
   api_key:
