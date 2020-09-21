@@ -1,0 +1,17 @@
+language: python
+jobs:
+  include:
+  - name: macOS 10.13
+    os: osx
+    osx_image: xcode9.4
+    language: shell
+install: pip3 install --upgrade pip
+script: pip3 install -r requirements.txt && pyinstaller YoYoMachines-Firmware-Uploader.spec
+deploy:
+  provider: releases
+  api_key:
+    secure: BDgo6w0sm+rwApUZAB6XNelOEmaO27bZPoVmlbD12Zvq3AAXTf92dHOpmAqwBZJc3MTN3opTo2Tpnw42dX4RdGMSEQs+JNvuw0drWI68IsTW02/A7SghXrEDyok2BvY4+XAHKXUEhbWKhu8xC/V1SYPiYbxQjkIXPs+1GVMB4xXf0+A0lG1bxbb7+w5AaFv92wGoWKRc9DFnJlNUPikMldkN2Uo0LkcEO8wQ9ol5PPeTXP93AW76B3uZduXbCYGlxD2lBvEScq5Z7DlT8Xu111fjuV3bssuZTSvNgBk4t463LGiTKnZ451cxGXt2cRdG3ofFbJXue+HR34LVbO1epxAe1igJ/+vmhhjuhaVg/rQiJcNVxNN39JogVAxdnQ6c5if7gtzRWDJbNIMdB4nkHK53nNghQN92RnjHi9V46G04Q8imMmXizgG891z4LDWKYecxT/HyxBjKaFMmlWNcw0c7JLJXRzR0CZaBtRDpiz81CWtfVMId3/6fM2IJN6Qn7WBABbJYVgZ+LY1huQVWOUkMl/yEQcmvuWd/ApJMng+Ox2gJvbzr2iu4CjZ8fMd0pNcEENUfqjvgFHG3csteVp8FOPHs6rzkRauM6G1DVwpQzAq276ujM14sRTiqqsVdrNwmCjtARB8nFhpS0Cua4vwxhaCykS9+NpMqVqGcKyM=
+  file: dist/*
+  on:
+    repo: mikevanis/esptool-python-gui
+  skip_cleanup: 'true'
