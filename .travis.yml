@@ -6,12 +6,13 @@ jobs:
     osx_image: xcode9.4
     language: shell
 install: pip3 install --upgrade pip
-script: pip3 install -r requirements.txt && pyinstaller YoYoMachines-Firmware-Uploader.spec && tar -czvf YoYoMachines-Firmware-Uploader.app.tgz YoYoMachines-Firmware-Uploader.app
+script: pip3 install -r requirements.txt && pyinstaller YoYoMachines-Firmware-Uploader.spec && zip -r YoYoMachines-Firmware-Uploader.app.zip YoYoMachines-Firmware-Uploader.app
 deploy:
   provider: releases
   api_key:
     secure: c+Bzs9s+zLfxfdCl+90WxynU7bPqNnSuru79EP11DFOArFuSvA+XgU+pa4bLLTKzpu74gQi5TJaVXPV9avPmx39TfGrhJeQ94gcNihdIEdwMZMGYBHYgKleOYmVKFBocw27A9y9CzqkkokmfnbWpXpVktSKYpHPd074VXupLD9UmqMJjq3iZ7h6HAXl0aprzM+ybO2C5MsQNSUMfRwPiXsbQqs0o77b1N8rf7+iS6Iq0WFsOGXPWddsQCLJ3AUVvRy9ap3NMC74n9setTqfbSRerxcwV+oIN4rx/Ym0/4/TJAQRnQaWFfIP7NXFOqgRc5EgarWk/4lJh5cHJMxPzH8/2dXMAHN2fOeYLIeTZvYGnHfeOXH49GTptle71kWoyXtSeuikh2XK3ZjxZNRs7WMsx8hkw4xLM+Y5AqbFNAHjMuTcfiRc6OsmmWTZyG78pkjn393caxomQLpcSABw9NstNa8S/irPDo75xrKoCItH0RRleG40BPDaNXCT5Ql45bw7+FjPIXSJv6ZXMeY2U96pGDa9HMNpk5YPADvqqPU74rrs6do8EZf+ijSifzQFpU8eZgKCodb7Lev3UCeVGEYcsl9/cfgGXSd4Cr6dfLTp3HdjndyIjsT+zpca9XyiguUXJCwDPTlblFwY9mFhJIN31dXPVLBaYSW7o7i/4cbY=
-  file: dist/YoYoMachines-Firmware-Uploader.app.tgz
+  file: dist/YoYoMachines-Firmware-Uploader.app.zip
   on:
     repo: mikevanis/esptool-python-gui
   skip_cleanup: 'true'
+  draft: 'true'
