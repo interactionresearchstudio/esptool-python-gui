@@ -27,5 +27,6 @@ deploy:
     - dist/YoYoMachines-Firmware-Uploader.exe.zip
   on:
     repo: mikevanis/esptool-python-gui
+    tags: true
   skip_cleanup: 'true'
   draft: 'true'
