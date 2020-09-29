@@ -35,6 +35,30 @@ esptool_erase_options = ['--chip', 'esp32',
                          ]
 
 
+class SerialPrinter(Thread):
+    def __init__(self, port):
+        Thread.__init__(self)
+        self.serial = serial.Serial(port)
+        self.serial.baudrate = 115200
+        self.serial.flushInput()
+        self.is_running = True
+        print("Started debug.")
+
+    def run(self):
+        while self.is_running:
+            try:
+                serial_in = self.serial.readline()
+                print(serial_in.decode('ascii'), end='')
+            except:
+                print("(Warning) Serial exception.")
+
+    def stop(self):
+        self.serial.flushInput()
+        self.is_running = False
+        self.serial.close()
+        print("Stopped debug.")
+
+
 class EspToolManager(Thread):
     def __init__(self, runnable, callback, port=None, erase=False, url=None):
         Thread.__init__(self)
@@ -140,6 +164,8 @@ class EspToolManager(Thread):
         esptool_erase_options[3] = serial_port
         esptool_options[-1] = fp.name
         try:
+            print(" ")
+            print("*** Please hold down BOOT button ***")
             if self.erase:
                 esptool_main(esptool_erase_options)
             esptool_main(esptool_options)
@@ -191,6 +217,7 @@ class MainFrame(wx.Frame):
         self.current_serial = ""
         self.current_project_url = ""
         self.erase_flash = False
+        self.serial_thread = None
 
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
 
@@ -251,10 +278,16 @@ class MainFrame(wx.Frame):
 
         flexgrid_sizer.Add((0, 0), 1, wx.EXPAND, 5)
 
-        self.upload_button = wx.Button(self, wx.ID_ANY, u"Upload", wx.DefaultPosition, wx.DefaultSize, 0)
+        upload_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
+        self.upload_button = wx.Button(self, wx.ID_ANY, u"Upload", wx.DefaultPosition, wx.DefaultSize, 0)
         self.upload_button.SetDefault()
-        flexgrid_sizer.Add(self.upload_button, 0, wx.ALL | wx.EXPAND, 5)
+        upload_sizer.Add(self.upload_button, 1, wx.ALL, 5)
+
+        self.debug_button = wx.Button(self, wx.ID_ANY, u"Debug", wx.DefaultPosition, wx.DefaultSize, 0)
+        upload_sizer.Add(self.debug_button, 0, wx.ALL, 5)
+
+        flexgrid_sizer.Add(upload_sizer, 1, wx.EXPAND, 5)
 
         root_sizer.Add(flexgrid_sizer, 0, wx.EXPAND, 5)
 
@@ -278,6 +311,7 @@ class MainFrame(wx.Frame):
         self.projects_choice.Bind(wx.EVT_CHOICE, self.on_projects_choice)
         self.erase_checkbox.Bind(wx.EVT_CHECKBOX, self.on_checkbox)
         self.upload_button.Bind(wx.EVT_BUTTON, self.on_upload_click)
+        self.debug_button.Bind(wx.EVT_BUTTON, self.on_debug_click)
 
         self.update_serial_list()
         self.update_projects_list()
@@ -290,6 +324,7 @@ class MainFrame(wx.Frame):
         self.serial_choice.Clear()
         self.serial_choice.AppendItems(self.serial_list)
         self.current_serial = self.serial_list[0]
+        print('Refreshed serial list')
 
     def populate_projects_list(self, new_list):
         self.projects_list = new_list
@@ -317,6 +352,7 @@ class MainFrame(wx.Frame):
             self.status_bar.SetStatusText("Error erasing data!")
             wx.CallAfter(self.console_text.AppendText, "Error erasing data!")
         self.upload_button.Enable()
+        self.debug_button.Enable()
 
     def upload_firmware(self):
         self.console_text.SetValue("")
@@ -338,6 +374,7 @@ class MainFrame(wx.Frame):
 
     # Event handlers
     def on_serial_refresh(self, event):
+        print('Refreshing serial list...')
         self.update_serial_list()
         event.Skip()
 
@@ -357,7 +394,22 @@ class MainFrame(wx.Frame):
 
     def on_upload_click(self, event):
         self.upload_button.Disable()
+        self.debug_button.Disable()
         self.upload_firmware()
+        event.Skip()
+
+    def on_debug_click(self, event):
+        if self.serial_thread is not None:
+            self.upload_button.Enable()
+            self.upload_button.SetDefault()
+            self.serial_thread.stop()
+            self.status_bar.SetStatusText("Idle")
+        else:
+            self.upload_button.Disable()
+            self.debug_button.SetDefault()
+            self.serial_thread = SerialPrinter(self.current_serial)
+            self.serial_thread.start()
+            self.status_bar.SetStatusText("Debugging")
         event.Skip()
 
 
