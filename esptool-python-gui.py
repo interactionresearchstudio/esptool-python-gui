@@ -165,7 +165,7 @@ class EspToolManager(Thread):
         esptool_options[-1] = fp.name
         try:
             print(" ")
-            print("*** Please hold down BOOT button ***")
+            print("👇 Please hold down BOOT button 👇")
             if self.erase:
                 esptool_main(esptool_erase_options)
             esptool_main(esptool_options)
