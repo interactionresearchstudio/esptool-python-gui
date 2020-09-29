@@ -355,6 +355,7 @@ class MainFrame(wx.Frame):
             wx.CallAfter(self.console_text.AppendText, "Error erasing data!")
         self.upload_button.Enable()
         self.debug_button.Enable()
+        self.serial_refresh_button.Enable()
 
     def upload_firmware(self):
         self.console_text.SetValue("")
@@ -398,6 +399,7 @@ class MainFrame(wx.Frame):
     def on_upload_click(self, event):
         self.upload_button.Disable()
         self.debug_button.Disable()
+        self.serial_refresh_button.Disable()
         self.upload_firmware()
         event.Skip()
 
@@ -408,12 +410,14 @@ class MainFrame(wx.Frame):
             self.serial_thread.stop()
             self.status_bar.SetStatusText("Idle")
             self.serial_thread = None
+            self.serial_refresh_button.Enable()
         else:
             self.upload_button.Disable()
             self.debug_button.SetDefault()
             self.serial_thread = SerialPrinter(self.current_serial)
             self.serial_thread.start()
             self.status_bar.SetStatusText("Debugging")
+            self.serial_refresh_button.Disable()
         event.Skip()
 
 
