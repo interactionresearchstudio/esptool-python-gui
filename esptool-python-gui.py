@@ -409,6 +409,7 @@ class MainFrame(wx.Frame):
             self.upload_button.SetDefault()
             self.serial_thread.stop()
             self.status_bar.SetStatusText("Idle")
+            self.serial_thread.join()
             self.serial_thread = None
             self.serial_refresh_button.Enable()
         else:
