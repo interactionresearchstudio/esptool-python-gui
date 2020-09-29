@@ -9,7 +9,7 @@ jobs:
     os: windows
     language: shell
     before_install:
-      - choco install python --version 3.8.0
+      - choco install python --version 3.7.0
       - python -m pip install --upgrade pip
     env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
 install:
@@ -26,6 +26,6 @@ deploy:
     - dist/YoYoMachines-Firmware-Uploader.app.zip
     - dist/YoYoMachines-Firmware-Uploader.exe.zip
   on:
-    repo: mikevanis/esptool-python-gui
+    tags: true
   skip_cleanup: 'true'
   draft: 'true'
