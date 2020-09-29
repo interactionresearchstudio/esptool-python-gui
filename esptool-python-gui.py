@@ -313,6 +313,7 @@ class MainFrame(wx.Frame):
         self.upload_button.Bind(wx.EVT_BUTTON, self.on_upload_click)
         self.debug_button.Bind(wx.EVT_BUTTON, self.on_debug_click)
 
+        print("Refreshing serial list...")
         self.update_serial_list()
         self.update_projects_list()
 
@@ -325,6 +326,7 @@ class MainFrame(wx.Frame):
         self.serial_choice.AppendItems(self.serial_list)
         self.current_serial = self.serial_list[0]
         print('Refreshed serial list')
+        self.serial_refresh_button.Enable()
 
     def populate_projects_list(self, new_list):
         self.projects_list = new_list
@@ -366,6 +368,7 @@ class MainFrame(wx.Frame):
     def update_serial_list(self):
         thread = EspToolManager(EspToolManager.get_serial_list, lambda new_list: self.populate_serial_list(new_list))
         thread.start()
+        self.serial_refresh_button.Disable()
 
     def update_projects_list(self):
         thread = EspToolManager(EspToolManager.get_projects_list,
@@ -404,6 +407,7 @@ class MainFrame(wx.Frame):
             self.upload_button.SetDefault()
             self.serial_thread.stop()
             self.status_bar.SetStatusText("Idle")
+            self.serial_thread = None
         else:
             self.upload_button.Disable()
             self.debug_button.SetDefault()
