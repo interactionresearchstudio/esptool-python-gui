@@ -17,7 +17,7 @@ install:
   - pip3 install -r requirements.txt
 script:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then pyinstaller YoYoMachines-Firmware-Uploader.spec && zip -r dist/YoYoMachines-Firmware-Uploader.app.zip dist/YoYoMachines-Firmware-Uploader.app ; fi
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then pyinstaller -F -w -n YoYoMachines-Firmware-Uploader esptool-python-gui.py && zip -r dist/YoYoMachines-Firmware-Uploader.exe.zip dist/YoYoMachines-Firmware-Uploader.exe ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then pyinstaller -F -w -n YoYoMachines-Firmware-Uploader esptool-python-gui.py && tar.exe -a -c -f dist/YoYoMachines-Firmware-Uploader.exe.zip dist/YoYoMachines-Firmware-Uploader.exe ; fi
 deploy:
   provider: releases
   api_key:
