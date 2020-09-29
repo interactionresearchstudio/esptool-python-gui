@@ -1,4 +1,6 @@
-![Build Workflow](https://github.com/interactionresearchstudio/esptool-python-gui/workflows/Build/badge.svg)
+![Build Workflow](https://travis-ci.com/interactionresearchstudio/esptool-python-gui.svg)
+![Downloads](https://img.shields.io/github/downloads/interactionresearchstudio/esptool-python-gui/total)
+![Release](https://img.shields.io/github/v/release/interactionresearchstudio/esptool-python-gui?include_prereleases)
 # Yo-Yo Machines Firmware Uploader
 This is an application for flashing YoYo Machines firmware to ESP32 boards.
 
