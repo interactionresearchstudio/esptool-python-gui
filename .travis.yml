@@ -16,21 +16,19 @@ install:
 - pip3 install --upgrade pip
 - pip3 install -r requirements.txt
 script:
-- if [ "$TRAVIS_OS_NAME" = "osx" ]; then pyinstaller YoYoMachines-Firmware-Uploader.spec &&\
-  mkdir YoYoMachines-Firmware-Uploader && mv dist/YoYoMachines-Firmware-Uploader.app YoYoMachines-Firmware-Uploader/YoYoMachines-Firmware-Uploader.app &&\
-  zip -r YoYoMachines-Firmware-Uploader-MacOS.zip YoYoMachines-Firmware-Uploader
+- if [ "$TRAVIS_OS_NAME" = "osx" ]; then pyinstaller YoYoMachines-Firmware-Uploader.spec
+  && zip -r dist/YoYoMachines-Firmware-Uploader.app.zip dist/YoYoMachines-Firmware-Uploader.app
   ; fi
 - if [ "$TRAVIS_OS_NAME" = "windows" ]; then pyinstaller -F -w -n YoYoMachines-Firmware-Uploader
-  esptool-python-gui.py &&\
-  mkdir YoYoMachines-Firmware-Uploader && mv dist/YoYoMachines-Firmware-Uploader.exe YoYoMachines-Firmware-Uploader/YoYoMachines-Firmware-Uploader.exe &&\
-  tar.exe -a -c -f YoYoMachines-Firmware-Uploader-Windows.zip YoYoMachines-Firmware-Uploader ; fi
+  esptool-python-gui.py && tar.exe -a -c -f dist/YoYoMachines-Firmware-Uploader.exe.zip
+  dist/YoYoMachines-Firmware-Uploader.exe ; fi
 deploy:
   provider: releases
   api_key:
     secure: QSWNhuN2jpWxVEqtsHziHzII/sLY0bcfEmBU7LDcXGqmebd+ft7SbLUzF6hgwKryXWIlI9pUc5Xq0AOVnpSZF1F+1fA+aM6EORDxdy2sSSL1uL9tf3CKyTqXniS4N6pDnFSE15RZu4NhHIqf7NhXFmQEfg4Jt82M5ZqNy+6E1LTBGDfxLVO/WpHD4M1JIR4MRnwEMexfa3rId4UZPqT+6AsUFlecFaxoJlNkCJPr+uGZHuBiH6rZBhsJeQrY2MuaomfJ6MGQdjToL+Lxqy8NDUCwt//PlGQrLTk+lX8gnRJha/lOda1OMFc+Ww0Fw6rqMVuhC/T0POyows28Ee4HJFSWqYRRicAE7GHLyC/qbplgR7Mw/Qf/8sdFtSrgV7zO4E7+GiRoDFJh95z5+J10N9g8og1IXH/J3NyMVgVbe1RpV8myfoGS1ffq3Wjt0oKAKyHaYgJF/j5Q4QnYbpX42/dCb8TYbwnfUfAIN3tAJQxxJNNQo3CJDlv6wtAtIl0Da634xO5SnKuK/LhmbOtJkV5tSZbSuyaor748KGzvRHRZr/d5lymPuoWDVdb41yGzZJRd0qT7KiDYEsAZTXS5JfDJreanDp/AYwv3qLEboa3l7n6nbjsAV+hwHlHVd1U/M7hR8vp0I+d/u8TAWTBSPX/qI1+NJxh3Mmps2UwjEGM=
   file:
-    - YoYoMachines-Firmware-Uploader-MacOS.zip
-    - YoYoMachines-Firmware-Uploader-Windows.zip
+    - dist/YoYoMachines-Firmware-Uploader.app.zip
+    - dist/YoYoMachines-Firmware-Uploader.exe.zip
   on:
     tags: true
   skip_cleanup: 'true'
