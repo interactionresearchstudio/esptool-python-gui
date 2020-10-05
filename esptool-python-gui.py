@@ -9,6 +9,7 @@ import glob
 import ssl
 from threading import Thread
 import wx
+import base64
 
 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -47,11 +48,15 @@ class SerialPrinter(Thread):
     def run(self):
         while self.is_running:
             try:
-                serial_in = self.serial.readline()
-                serial_in.rstrip()
-                print(serial_in.decode('ascii'))
+                serial_in = self.serial.readline().strip()
+                try:
+                    serial_decoded = serial_in.decode('ascii')
+                    serial_decoded.strip()
+                except UnicodeDecodeError:
+                    serial_decoded = ''
+                print(serial_decoded)
             except serial.SerialException:
-                print("(Warning) Serial exception.")
+                continue
 
     def stop(self):
         self.serial.flushInput()
@@ -199,15 +204,7 @@ class RedirectText:
         self.__out = text_ctrl
 
     def write(self, string):
-        if string.startswith("\r"):
-            # carriage return -> remove last line i.e. reset position to start of last line
-            current_value = self.__out.GetValue()
-            last_newline = current_value.rfind("\n")
-            new_value = current_value[:last_newline + 1]  # preserve \n
-            new_value += string[1:]  # chop off leading \r
-            wx.CallAfter(self.__out.SetValue, new_value)
-        else:
-            wx.CallAfter(self.__out.AppendText, string)
+        wx.CallAfter(self.__out.WriteText, string)
 
     # noinspection PyMethodMayBeStatic
     def flush(self):
