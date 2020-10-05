@@ -48,6 +48,7 @@ class SerialPrinter(Thread):
         while self.is_running:
             try:
                 serial_in = self.serial.readline()
+                # TODO strip before printing.
                 print(serial_in.decode('ascii'), end='')
             except:
                 print("(Warning) Serial exception.")
@@ -113,7 +114,7 @@ class EspToolManager(Thread):
                 A list of the serial ports available on the system
         """
         if sys.platform.startswith('win'):
-            ports = ['COM%s' % (i + 1) for i in range(256)]
+            ports = ['COM%s' % (i + 1) for i in range(32)]
         elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
             # this excludes your current terminal "/dev/tty"
             ports = glob.glob('/dev/tty[A-Za-z]*')
@@ -124,12 +125,18 @@ class EspToolManager(Thread):
 
         result = []
         for port in ports:
-            try:
-                s = serial.Serial(port)
-                s.close()
-                result.append(port)
-            except (OSError, serial.SerialException):
-                pass
+            if sys.platform.startswith('win'):
+                try:
+                    s = serial.Serial(port)
+                    s.close()
+                    result.insert(0, port)
+                except (OSError, serial.SerialException):
+                    pass
+            else:
+                if 'cu.SLAB_USBtoUART' in port:
+                    result.insert(0, port)
+                else:
+                    result.append(port)
         return result
 
     @staticmethod
