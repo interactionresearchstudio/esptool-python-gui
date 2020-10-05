@@ -48,9 +48,9 @@ class SerialPrinter(Thread):
         while self.is_running:
             try:
                 serial_in = self.serial.readline()
-                # TODO strip before printing.
-                print(serial_in.decode('ascii'), end='')
-            except:
+                serial_in.rstrip()
+                print(serial_in.decode('ascii'))
+            except serial.SerialException:
                 print("(Warning) Serial exception.")
 
     def stop(self):
@@ -291,7 +291,7 @@ class MainFrame(wx.Frame):
         self.upload_button.SetDefault()
         upload_sizer.Add(self.upload_button, 1, wx.ALL, 5)
 
-        self.debug_button = wx.Button(self, wx.ID_ANY, u"Debug", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.debug_button = wx.Button(self, wx.ID_ANY, u"Start Debug", wx.DefaultPosition, wx.DefaultSize, 0)
         upload_sizer.Add(self.debug_button, 0, wx.ALL, 5)
 
         flexgrid_sizer.Add(upload_sizer, 1, wx.EXPAND, 5)
@@ -363,6 +363,7 @@ class MainFrame(wx.Frame):
         self.upload_button.Enable()
         self.debug_button.Enable()
         self.serial_refresh_button.Enable()
+        self.serial_choice.Enable()
 
     def upload_firmware(self):
         self.console_text.SetValue("")
@@ -404,28 +405,36 @@ class MainFrame(wx.Frame):
         self.erase_flash = checkbox.GetValue()
 
     def on_upload_click(self, event):
+        if self.serial_thread is not None:
+            self.debug_button.SetLabelText("Start Debug")
+            self.serial_thread.stop()
+            self.status_bar.SetStatusText("Idle")
+            self.serial_thread.join()
+            self.serial_thread = None
+            self.serial_refresh_button.Enable()
         self.upload_button.Disable()
         self.debug_button.Disable()
+        self.serial_choice.Disable()
         self.serial_refresh_button.Disable()
         self.upload_firmware()
         event.Skip()
 
     def on_debug_click(self, event):
         if self.serial_thread is not None:
-            self.upload_button.Enable()
-            self.upload_button.SetDefault()
+            self.debug_button.SetLabelText("Start Debug")
             self.serial_thread.stop()
             self.status_bar.SetStatusText("Idle")
             self.serial_thread.join()
             self.serial_thread = None
             self.serial_refresh_button.Enable()
+            self.serial_choice.Enable()
         else:
-            self.upload_button.Disable()
-            self.debug_button.SetDefault()
+            self.debug_button.SetLabelText("Stop Debug")
             self.serial_thread = SerialPrinter(self.current_serial)
             self.serial_thread.start()
             self.status_bar.SetStatusText("Debugging")
             self.serial_refresh_button.Disable()
+            self.serial_choice.Disable()
         event.Skip()
 
 
