@@ -9,19 +9,23 @@ jobs:
     os: windows
     language: shell
     before_install:
-      - choco install python --version 3.8.0
-      - python -m pip install --upgrade pip
+    - choco install python --version 3.8.0
+    - python -m pip install --upgrade pip
     env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
 install:
-  - pip3 install --upgrade pip
-  - pip3 install -r requirements.txt
+- pip3 install --upgrade pip
+- pip3 install -r requirements.txt
 script:
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then pyinstaller YoYoMachines-Firmware-Uploader.spec && zip -r dist/YoYoMachines-Firmware-Uploader.app.zip dist/YoYoMachines-Firmware-Uploader.app ; fi
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then pyinstaller -F -w -n YoYoMachines-Firmware-Uploader esptool-python-gui.py && tar.exe -a -c -f dist/YoYoMachines-Firmware-Uploader.exe.zip dist/YoYoMachines-Firmware-Uploader.exe ; fi
+- if [ "$TRAVIS_OS_NAME" = "osx" ]; then pyinstaller YoYoMachines-Firmware-Uploader.spec
+  && zip -r dist/YoYoMachines-Firmware-Uploader.app.zip dist/YoYoMachines-Firmware-Uploader.app
+  ; fi
+- if [ "$TRAVIS_OS_NAME" = "windows" ]; then pyinstaller -F -w -n YoYoMachines-Firmware-Uploader
+  esptool-python-gui.py && tar.exe -a -c -f dist/YoYoMachines-Firmware-Uploader.exe.zip
+  dist/YoYoMachines-Firmware-Uploader.exe ; fi
 deploy:
   provider: releases
   api_key:
-    secure: c+Bzs9s+zLfxfdCl+90WxynU7bPqNnSuru79EP11DFOArFuSvA+XgU+pa4bLLTKzpu74gQi5TJaVXPV9avPmx39TfGrhJeQ94gcNihdIEdwMZMGYBHYgKleOYmVKFBocw27A9y9CzqkkokmfnbWpXpVktSKYpHPd074VXupLD9UmqMJjq3iZ7h6HAXl0aprzM+ybO2C5MsQNSUMfRwPiXsbQqs0o77b1N8rf7+iS6Iq0WFsOGXPWddsQCLJ3AUVvRy9ap3NMC74n9setTqfbSRerxcwV+oIN4rx/Ym0/4/TJAQRnQaWFfIP7NXFOqgRc5EgarWk/4lJh5cHJMxPzH8/2dXMAHN2fOeYLIeTZvYGnHfeOXH49GTptle71kWoyXtSeuikh2XK3ZjxZNRs7WMsx8hkw4xLM+Y5AqbFNAHjMuTcfiRc6OsmmWTZyG78pkjn393caxomQLpcSABw9NstNa8S/irPDo75xrKoCItH0RRleG40BPDaNXCT5Ql45bw7+FjPIXSJv6ZXMeY2U96pGDa9HMNpk5YPADvqqPU74rrs6do8EZf+ijSifzQFpU8eZgKCodb7Lev3UCeVGEYcsl9/cfgGXSd4Cr6dfLTp3HdjndyIjsT+zpca9XyiguUXJCwDPTlblFwY9mFhJIN31dXPVLBaYSW7o7i/4cbY=
+    secure: QSWNhuN2jpWxVEqtsHziHzII/sLY0bcfEmBU7LDcXGqmebd+ft7SbLUzF6hgwKryXWIlI9pUc5Xq0AOVnpSZF1F+1fA+aM6EORDxdy2sSSL1uL9tf3CKyTqXniS4N6pDnFSE15RZu4NhHIqf7NhXFmQEfg4Jt82M5ZqNy+6E1LTBGDfxLVO/WpHD4M1JIR4MRnwEMexfa3rId4UZPqT+6AsUFlecFaxoJlNkCJPr+uGZHuBiH6rZBhsJeQrY2MuaomfJ6MGQdjToL+Lxqy8NDUCwt//PlGQrLTk+lX8gnRJha/lOda1OMFc+Ww0Fw6rqMVuhC/T0POyows28Ee4HJFSWqYRRicAE7GHLyC/qbplgR7Mw/Qf/8sdFtSrgV7zO4E7+GiRoDFJh95z5+J10N9g8og1IXH/J3NyMVgVbe1RpV8myfoGS1ffq3Wjt0oKAKyHaYgJF/j5Q4QnYbpX42/dCb8TYbwnfUfAIN3tAJQxxJNNQo3CJDlv6wtAtIl0Da634xO5SnKuK/LhmbOtJkV5tSZbSuyaor748KGzvRHRZr/d5lymPuoWDVdb41yGzZJRd0qT7KiDYEsAZTXS5JfDJreanDp/AYwv3qLEboa3l7n6nbjsAV+hwHlHVd1U/M7hR8vp0I+d/u8TAWTBSPX/qI1+NJxh3Mmps2UwjEGM=
   file:
     - dist/YoYoMachines-Firmware-Uploader.app.zip
     - dist/YoYoMachines-Firmware-Uploader.exe.zip
