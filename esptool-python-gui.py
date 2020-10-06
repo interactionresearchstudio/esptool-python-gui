@@ -214,6 +214,9 @@ class MainFrame(wx.Frame):
         wx.Frame.__init__(self, parent, id=wx.ID_ANY, title="Yo-Yo Machines", pos=wx.DefaultPosition,
                           size=wx.Size(486, 504), style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 
+        MenuBar = wx.MenuBar()
+        self.SetMenuBar(MenuBar)
+        
         self.current_serial = ""
         self.current_project_url = ""
         self.erase_flash = False
