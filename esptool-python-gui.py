@@ -9,6 +9,7 @@ import glob
 import ssl
 from threading import Thread
 import wx
+import base64
 
 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -47,10 +48,15 @@ class SerialPrinter(Thread):
     def run(self):
         while self.is_running:
             try:
-                serial_in = self.serial.readline()
-                print(serial_in.decode('ascii'), end='')
-            except:
-                print("(Warning) Serial exception.")
+                serial_in = self.serial.readline().strip()
+                try:
+                    serial_decoded = serial_in.decode('ascii')
+                    serial_decoded.strip()
+                except UnicodeDecodeError:
+                    serial_decoded = ''
+                print(serial_decoded)
+            except serial.SerialException:
+                continue
 
     def stop(self):
         self.serial.flushInput()
@@ -113,7 +119,7 @@ class EspToolManager(Thread):
                 A list of the serial ports available on the system
         """
         if sys.platform.startswith('win'):
-            ports = ['COM%s' % (i + 1) for i in range(256)]
+            ports = ['COM%s' % (i + 1) for i in range(32)]
         elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
             # this excludes your current terminal "/dev/tty"
             ports = glob.glob('/dev/tty[A-Za-z]*')
@@ -124,12 +130,18 @@ class EspToolManager(Thread):
 
         result = []
         for port in ports:
-            try:
-                s = serial.Serial(port)
-                s.close()
-                result.append(port)
-            except (OSError, serial.SerialException):
-                pass
+            if sys.platform.startswith('win'):
+                try:
+                    s = serial.Serial(port)
+                    s.close()
+                    result.insert(0, port)
+                except (OSError, serial.SerialException):
+                    pass
+            else:
+                if 'cu.SLAB_USBtoUART' in port:
+                    result.insert(0, port)
+                else:
+                    result.append(port)
         return result
 
     @staticmethod
@@ -192,15 +204,7 @@ class RedirectText:
         self.__out = text_ctrl
 
     def write(self, string):
-        if string.startswith("\r"):
-            # carriage return -> remove last line i.e. reset position to start of last line
-            current_value = self.__out.GetValue()
-            last_newline = current_value.rfind("\n")
-            new_value = current_value[:last_newline + 1]  # preserve \n
-            new_value += string[1:]  # chop off leading \r
-            wx.CallAfter(self.__out.SetValue, new_value)
-        else:
-            wx.CallAfter(self.__out.AppendText, string)
+        wx.CallAfter(self.__out.WriteText, string)
 
     # noinspection PyMethodMayBeStatic
     def flush(self):
@@ -284,7 +288,7 @@ class MainFrame(wx.Frame):
         self.upload_button.SetDefault()
         upload_sizer.Add(self.upload_button, 1, wx.ALL, 5)
 
-        self.debug_button = wx.Button(self, wx.ID_ANY, u"Debug", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.debug_button = wx.Button(self, wx.ID_ANY, u"Start Debug", wx.DefaultPosition, wx.DefaultSize, 0)
         upload_sizer.Add(self.debug_button, 0, wx.ALL, 5)
 
         flexgrid_sizer.Add(upload_sizer, 1, wx.EXPAND, 5)
@@ -356,6 +360,7 @@ class MainFrame(wx.Frame):
         self.upload_button.Enable()
         self.debug_button.Enable()
         self.serial_refresh_button.Enable()
+        self.serial_choice.Enable()
 
     def upload_firmware(self):
         self.console_text.SetValue("")
@@ -397,28 +402,36 @@ class MainFrame(wx.Frame):
         self.erase_flash = checkbox.GetValue()
 
     def on_upload_click(self, event):
+        if self.serial_thread is not None:
+            self.debug_button.SetLabelText("Start Debug")
+            self.serial_thread.stop()
+            self.status_bar.SetStatusText("Idle")
+            self.serial_thread.join()
+            self.serial_thread = None
+            self.serial_refresh_button.Enable()
         self.upload_button.Disable()
         self.debug_button.Disable()
+        self.serial_choice.Disable()
         self.serial_refresh_button.Disable()
         self.upload_firmware()
         event.Skip()
 
     def on_debug_click(self, event):
         if self.serial_thread is not None:
-            self.upload_button.Enable()
-            self.upload_button.SetDefault()
+            self.debug_button.SetLabelText("Start Debug")
             self.serial_thread.stop()
             self.status_bar.SetStatusText("Idle")
             self.serial_thread.join()
             self.serial_thread = None
             self.serial_refresh_button.Enable()
+            self.serial_choice.Enable()
         else:
-            self.upload_button.Disable()
-            self.debug_button.SetDefault()
+            self.debug_button.SetLabelText("Stop Debug")
             self.serial_thread = SerialPrinter(self.current_serial)
             self.serial_thread.start()
             self.status_bar.SetStatusText("Debugging")
             self.serial_refresh_button.Disable()
+            self.serial_choice.Disable()
         event.Skip()
 
 

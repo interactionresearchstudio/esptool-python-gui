@@ -16,16 +16,12 @@ install:
 - pip3 install --upgrade pip
 - pip3 install -r requirements.txt
 script:
-- if [ "$TRAVIS_OS_NAME" = "osx" ]; then pyinstaller YoYoMachines-Firmware-Uploader.spec
-  && zip -r dist/YoYoMachines-Firmware-Uploader.app.zip dist/YoYoMachines-Firmware-Uploader.app
-  ; fi
-- if [ "$TRAVIS_OS_NAME" = "windows" ]; then pyinstaller -F -w -n YoYoMachines-Firmware-Uploader
-  esptool-python-gui.py && tar.exe -a -c -f dist/YoYoMachines-Firmware-Uploader.exe.zip
-  dist/YoYoMachines-Firmware-Uploader.exe ; fi
+- if [ "$TRAVIS_OS_NAME" = "osx" ]; then pyinstaller YoYoMachines-Firmware-Uploader.spec && zip -r dist/YoYoMachines-Firmware-Uploader.app.zip dist/Yo-Yo\ Machines\ Firmware\ Uploader.app ; fi
+- if [ "$TRAVIS_OS_NAME" = "windows" ]; then pyinstaller -F -w -n Yo-Yo\ Machines\ Firmware\ Uploader --icon=images/icon.ico esptool-python-gui.py && tar.exe -a -c -f dist/YoYoMachines-Firmware-Uploader.exe.zip dist/Yo-Yo\ Machines\ Firmware\ Uploader.exe ; fi
 deploy:
   provider: releases
   api_key:
-    secure: QSWNhuN2jpWxVEqtsHziHzII/sLY0bcfEmBU7LDcXGqmebd+ft7SbLUzF6hgwKryXWIlI9pUc5Xq0AOVnpSZF1F+1fA+aM6EORDxdy2sSSL1uL9tf3CKyTqXniS4N6pDnFSE15RZu4NhHIqf7NhXFmQEfg4Jt82M5ZqNy+6E1LTBGDfxLVO/WpHD4M1JIR4MRnwEMexfa3rId4UZPqT+6AsUFlecFaxoJlNkCJPr+uGZHuBiH6rZBhsJeQrY2MuaomfJ6MGQdjToL+Lxqy8NDUCwt//PlGQrLTk+lX8gnRJha/lOda1OMFc+Ww0Fw6rqMVuhC/T0POyows28Ee4HJFSWqYRRicAE7GHLyC/qbplgR7Mw/Qf/8sdFtSrgV7zO4E7+GiRoDFJh95z5+J10N9g8og1IXH/J3NyMVgVbe1RpV8myfoGS1ffq3Wjt0oKAKyHaYgJF/j5Q4QnYbpX42/dCb8TYbwnfUfAIN3tAJQxxJNNQo3CJDlv6wtAtIl0Da634xO5SnKuK/LhmbOtJkV5tSZbSuyaor748KGzvRHRZr/d5lymPuoWDVdb41yGzZJRd0qT7KiDYEsAZTXS5JfDJreanDp/AYwv3qLEboa3l7n6nbjsAV+hwHlHVd1U/M7hR8vp0I+d/u8TAWTBSPX/qI1+NJxh3Mmps2UwjEGM=
+    secure: mAGMwjR7aYpZrSOlKEcoscIQ1uLvWRB/biSoUN0Kd2HjBfwkJyRcVZhJso2yK/NurVsgXSwN5dVZixsOJsA42txsnEMSAllepBjeaoy6gnWQpoqmz2MIzw9cloyicw113RJM8WrWyoQ68OKjlx1u+uyHKbmNC0U1vflXDgtDZDflDFXtZV6htrihFIBd/MQ1lBMDg7mPy2bmDUmatWYz5/LmEMLC5a/Og33+/xKvx+nJlvYZl36rHnPf6bsnlSFUIrVHBcCNPbVZdHwd6JyC1RMSIiLolprUtNUyJGfKW62iMf8xRtzPWb0rEmcaLB8ZjFtJF2HRoRpUJwmgUQH7S0GWyAYARlmNWGW4hlmlonX5FKK7N8ZbqI0hOXBKVaxRXuWl5HK978brKnTh5Tcw31TTtMjnI+fADCLgPq9usVNhAeCZGx7vaJ0dUTU1EzTRTnPZ/WK5VjyA1urRSzD3C5znc/29NBpK1nIKyZ/FBuEpDSgmbBI7sKJG82QNjUcdH8/BDRD4TRzt6mmSU4OF9vvV8/dcJP00iIBFb4cMw5gX5qFTCpenphAx4rXp2vQgOT02WlOvOewSPFQUn3NwSJGqowh5bnlDln12GvPqEHmC17huRznyGXM2Mh0oh5R4GMmOJXaAwyHAix9Rw3LQjg0WXwp1NlyVBZLz3TivRqg=
   file:
     - dist/YoYoMachines-Firmware-Uploader.app.zip
     - dist/YoYoMachines-Firmware-Uploader.exe.zip
