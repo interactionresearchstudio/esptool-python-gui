@@ -9,7 +9,7 @@ import glob
 import ssl
 from threading import Thread
 import wx
-import base64
+import atexit
 
 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -218,12 +218,20 @@ class MainFrame(wx.Frame):
         wx.Frame.__init__(self, parent, id=wx.ID_ANY, title="Yo-Yo Machines", pos=wx.DefaultPosition,
                           size=wx.Size(486, 504), style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 
+        self.Bind(wx.EVT_CLOSE, self.on_exit)
+        atexit.register(lambda: self.on_exit(None))
+        self.is_exiting = False
+
         self.current_serial = ""
         self.current_project_url = ""
         self.erase_flash = False
         self.serial_thread = None
+        self.esptool_thread = None
 
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
+
+        MenuBar = wx.MenuBar()
+        self.SetMenuBar(MenuBar)
 
         root_sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -324,12 +332,28 @@ class MainFrame(wx.Frame):
     def __del__(self):
         pass
 
+    def on_exit(self, e):
+        if self.is_exiting is False:
+            self.is_exiting = True
+            print("Exiting...")
+            if self.esptool_thread is not None:
+                print("Stopping esptool thread...")
+                self.esptool_thread.join()
+            if self.serial_thread is not None:
+                print("Stopping serial thread...")
+                self.serial_thread.stop()
+                self.serial_thread.join()
+            self.Close()
+            exit()
+
     def populate_serial_list(self, new_list):
         self.serial_list = new_list
         self.serial_choice.Clear()
         self.serial_choice.AppendItems(self.serial_list)
         self.current_serial = self.serial_list[0]
         print('Refreshed serial list')
+        self.esptool_thread.join()
+        self.esptool_thread = None
         self.serial_refresh_button.Enable()
 
     def populate_projects_list(self, new_list):
@@ -361,25 +385,29 @@ class MainFrame(wx.Frame):
         self.debug_button.Enable()
         self.serial_refresh_button.Enable()
         self.serial_choice.Enable()
+        self.esptool_thread.join()
+        self.esptool_thread = None
 
     def upload_firmware(self):
         self.console_text.SetValue("")
         self.status_bar.SetStatusText("Uploading firmware...")
         wx.CallAfter(self.console_text.AppendText, "Uploading firmware...")
-        thread = EspToolManager(EspToolManager.upload_from_github,
-                                lambda res: self.update_status(res),
-                                port=self.current_serial, erase=self.erase_flash, url=self.current_project_url)
-        thread.start()
+        self.esptool_thread = EspToolManager(EspToolManager.upload_from_github,
+                                             lambda res: self.update_status(res),
+                                             port=self.current_serial, erase=self.erase_flash,
+                                             url=self.current_project_url)
+        self.esptool_thread.start()
 
     def update_serial_list(self):
-        thread = EspToolManager(EspToolManager.get_serial_list, lambda new_list: self.populate_serial_list(new_list))
-        thread.start()
+        self.esptool_thread = EspToolManager(EspToolManager.get_serial_list,
+                                             lambda new_list: self.populate_serial_list(new_list))
+        self.esptool_thread.start()
         self.serial_refresh_button.Disable()
 
     def update_projects_list(self):
-        thread = EspToolManager(EspToolManager.get_projects_list,
-                                lambda new_list: self.populate_projects_list(new_list))
-        thread.start()
+        self.esptool_thread = EspToolManager(EspToolManager.get_projects_list,
+                                             lambda new_list: self.populate_projects_list(new_list))
+        self.esptool_thread.start()
 
     # Event handlers
     def on_serial_refresh(self, event):
