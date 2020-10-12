@@ -222,6 +222,9 @@ class MainFrame(wx.Frame):
         atexit.register(lambda: self.on_exit(None))
         self.is_exiting = False
 
+        MenuBar = wx.MenuBar()
+        self.SetMenuBar(MenuBar)
+
         self.current_serial = ""
         self.current_project_url = ""
         self.erase_flash = False
