@@ -215,15 +215,16 @@ class RedirectText:
 class MainFrame(wx.Frame):
 
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, id=wx.ID_ANY, title="Yo-Yo Machines", pos=wx.DefaultPosition,
+        wx.Frame.__init__(self, parent, id=wx.ID_ANY, title="Yo-Yo Firmware Uploader", pos=wx.DefaultPosition,
                           size=wx.Size(486, 504), style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 
+        # Clean quit handlers
         self.Bind(wx.EVT_CLOSE, self.on_exit)
         atexit.register(lambda: self.on_exit(None))
         self.is_exiting = False
-
-        MenuBar = wx.MenuBar()
-        self.SetMenuBar(MenuBar)
+        self.Bind(wx.EVT_MENU, self.on_exit)
+        accel_tbl = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('Q'), wx.ID_ANY)])
+        self.SetAcceleratorTable(accel_tbl)
 
         self.current_serial = ""
         self.current_project_url = ""
@@ -233,8 +234,8 @@ class MainFrame(wx.Frame):
 
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
 
-        MenuBar = wx.MenuBar()
-        self.SetMenuBar(MenuBar)
+        menu_bar = wx.MenuBar()
+        self.SetMenuBar(menu_bar)
 
         root_sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -335,7 +336,12 @@ class MainFrame(wx.Frame):
     def __del__(self):
         pass
 
-    def on_exit(self, e):
+    def handle_key(self, event):
+        print("Key pressed!")
+        if event.GetKeyCode() == 'q' and event.GetModifiers() == wx.MOD_CONTROL:
+            self.on_exit(None)
+
+    def exit_gracefully(self):
         if self.is_exiting is False:
             self.is_exiting = True
             print("Exiting...")
@@ -348,6 +354,11 @@ class MainFrame(wx.Frame):
                 self.serial_thread.join()
             self.Close()
             exit()
+
+    def on_exit(self, e):
+        self.exit_gracefully()
+        if e is not None:
+            e.Skip()
 
     def populate_serial_list(self, new_list):
         self.serial_list = new_list
