@@ -189,6 +189,23 @@ class EspToolManager(Thread):
             print(e)
             self.callback(3)
 
+    def upload_bin(self, serial_port, filename):
+        # Write to device with esptool
+        esptool_options[3] = serial_port
+        esptool_erase_options[3] = serial_port
+        esptool_options[-1] = filename
+        try:
+            print(" ")
+            print("👇 Please hold down BOOT button 👇")
+            if self.erase:
+                esptool_main(esptool_erase_options)
+            esptool_main(esptool_options)
+            self.callback(0)
+        except Exception as e:
+            print("Error uploading to device!")
+            print(e)
+            self.callback(3)
+
     # Update serial list dropdown
     def get_serial_list(self):
         new_list = self.serial_ports()
@@ -210,6 +227,16 @@ class RedirectText:
     def flush(self):
         # noinspection PyStatementEffect
         None
+
+
+class DropTarget(wx.FileDropTarget):
+    def __init__(self, frame):
+        wx.FileDropTarget.__init__(self)
+        self.frame = frame
+
+    def OnDropFiles(self, x, y, filenames):
+        self.frame.on_file_drop(filenames)
+        return True
 
 
 class MainFrame(wx.Frame):
@@ -236,6 +263,10 @@ class MainFrame(wx.Frame):
 
         menu_bar = wx.MenuBar()
         self.SetMenuBar(menu_bar)
+
+        # Drag and drop
+        file_drop_target = DropTarget(self)
+        self.SetDropTarget(file_drop_target)
 
         root_sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -366,8 +397,6 @@ class MainFrame(wx.Frame):
         self.serial_choice.AppendItems(self.serial_list)
         self.current_serial = self.serial_list[0]
         print('Refreshed serial list')
-        self.esptool_thread.join()
-        self.esptool_thread = None
         self.serial_refresh_button.Enable()
 
     def populate_projects_list(self, new_list):
@@ -399,8 +428,11 @@ class MainFrame(wx.Frame):
         self.debug_button.Enable()
         self.serial_refresh_button.Enable()
         self.serial_choice.Enable()
-        self.esptool_thread.join()
-        self.esptool_thread = None
+        try:
+            self.esptool_thread.join()
+            self.esptool_thread = None
+        except RuntimeError:
+            self.esptool_thread = None
 
     def upload_firmware(self):
         self.console_text.SetValue("")
@@ -410,6 +442,17 @@ class MainFrame(wx.Frame):
                                              lambda res: self.update_status(res),
                                              port=self.current_serial, erase=self.erase_flash,
                                              url=self.current_project_url)
+        self.esptool_thread.start()
+
+    def upload_bin_file(self, filename):
+        self.console_text.SetValue("")
+        self.status_bar.SetStatusText("Uploading firmware...")
+        wx.CallAfter(self.console_text.AppendText, "Uploading firmware...")
+
+        self.esptool_thread = EspToolManager(EspToolManager.upload_bin,
+                                             lambda res: self.update_status(res),
+                                             port=self.current_serial, erase=self.erase_flash,
+                                             url=filename)
         self.esptool_thread.start()
 
     def update_serial_list(self):
@@ -475,6 +518,15 @@ class MainFrame(wx.Frame):
             self.serial_refresh_button.Disable()
             self.serial_choice.Disable()
         event.Skip()
+
+    def on_file_drop(self, filenames):
+        for f in filenames:
+            if f.endswith('combined.bin'):
+                bin_file = f
+                print("Uploading bin file...")
+                self.upload_bin_file(bin_file)
+                return
+        print("Not a bin file! Will not upload.")
 
 
 if __name__ == '__main__':
