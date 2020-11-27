@@ -475,7 +475,7 @@ class MainFrame(wx.Frame):
     def on_projects_choice(self, event):
         choice = event.GetEventObject()
         for project in self.projects_list:
-            if project['name'] == choice:
+            if project['name'] == choice.GetString(choice.GetSelection()):
                 self.current_project_url = project['releaseUrl']
 
     def on_serial_choice(self, event):
