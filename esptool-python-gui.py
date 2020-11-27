@@ -14,7 +14,7 @@ import atexit
 if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
     ssl._create_default_https_context = ssl._create_unverified_context
 
-server_projects_url = 'https://irs-socket-server.herokuapp.com/projects'
+server_projects_url = 'https://irs-socket-server-staging.herokuapp.com/projects'
 
 esptool_options = ['--chip', 'esp32',
                    '--port', '/dev/cu.myserial',
@@ -475,7 +475,7 @@ class MainFrame(wx.Frame):
     def on_projects_choice(self, event):
         choice = event.GetEventObject()
         for project in self.projects_list:
-            if project['name'] == choice:
+            if project['name'] == choice.GetString(choice.GetSelection()):
                 self.current_project_url = project['releaseUrl']
 
     def on_serial_choice(self, event):
